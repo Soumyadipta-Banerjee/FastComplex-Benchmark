@@ -1,0 +1,19 @@
+# Build directories
+build/
+builddir/
+meson-logs/
+meson-private/
+
+# Generate files
+*.json
+*.png
+
+# Subprojects
+subprojects/google-benchmark/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
