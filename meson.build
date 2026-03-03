@@ -26,3 +26,10 @@ executable('benchmark_main',
   dependencies : [benchmark_dep, thread_dep],
   install : false
 )
+
+executable('tests',
+  'src/tests.cpp',
+  include_directories : inc,
+  dependencies : [thread_dep], # Google benchmark not needed for sanity tests
+  install : false
+)

@@ -125,3 +125,117 @@ inline void DaxpySoA_AVX2(const ComplexVectorSoA& x, ComplexVectorSoA& y, double
         y.imag[i] += alpha_r * xi + alpha_i * xr;
     }
 }
+
+// --- DIVISION ---
+
+// Raw loop division (Scalar SoA)
+inline void DivideSoA(const ComplexVectorSoA& a, const ComplexVectorSoA& b, ComplexVectorSoA& result) {
+    const size_t n = a.size();
+    for (size_t i = 0; i < n; ++i) {
+        double ar = a.real[i];
+        double ai = a.imag[i];
+        double br = b.real[i];
+        double bi = b.imag[i];
+        double denom = br * br + bi * bi;
+
+        result.real[i] = (ar * br + ai * bi) / denom;
+        result.imag[i] = (ai * br - ar * bi) / denom;
+    }
+}
+
+// AVX2 vectorized division (Vector SoA)
+inline void DivideSoA_AVX2(const ComplexVectorSoA& a, const ComplexVectorSoA& b, ComplexVectorSoA& result) {
+    const size_t n = a.size();
+    size_t i = 0;
+
+    for (; i + 3 < n; i += 4) {
+        __m256d a_r = _mm256_loadu_pd(&a.real[i]);
+        __m256d a_i = _mm256_loadu_pd(&a.imag[i]);
+        __m256d b_r = _mm256_loadu_pd(&b.real[i]);
+        __m256d b_i = _mm256_loadu_pd(&b.imag[i]);
+
+        // denom = b_r^2 + b_i^2
+        __m256d br2 = _mm256_mul_pd(b_r, b_r);
+        __m256d bi2 = _mm256_mul_pd(b_i, b_i);
+        __m256d denom = _mm256_add_pd(br2, bi2);
+
+        // real = (a_r*b_r + a_i*b_i) / denom
+        __m256d r1 = _mm256_mul_pd(a_r, b_r);
+        __m256d r2 = _mm256_mul_pd(a_i, b_i);
+        __m256d res_r = _mm256_div_pd(_mm256_add_pd(r1, r2), denom);
+
+        // imag = (a_i*b_r - a_r*b_i) / denom
+        __m256d i1 = _mm256_mul_pd(a_i, b_r);
+        __m256d i2 = _mm256_mul_pd(a_r, b_i);
+        __m256d res_i = _mm256_div_pd(_mm256_sub_pd(i1, i2), denom);
+
+        _mm256_storeu_pd(&result.real[i], res_r);
+        _mm256_storeu_pd(&result.imag[i], res_i);
+    }
+
+    for (; i < n; ++i) {
+        double ar = a.real[i];
+        double ai = a.imag[i];
+        double br = b.real[i];
+        double bi = b.imag[i];
+        double denom = br * br + bi * bi;
+        result.real[i] = (ar * br + ai * bi) / denom;
+        result.imag[i] = (ai * br - ar * bi) / denom;
+    }
+}
+
+// --- DOT PRODUCT ---
+
+// Vectorized Dot Product using AVX2
+inline void DotProductSoA_AVX2(const ComplexVectorSoA& a, const ComplexVectorSoA& b, double& res_r, double& res_i) {
+    const size_t n = a.size();
+    size_t i = 0;
+
+    __m256d sum_r = _mm256_setzero_pd();
+    __m256d sum_i = _mm256_setzero_pd();
+
+    for (; i + 3 < n; i += 4) {
+        __m256d a_r = _mm256_loadu_pd(&a.real[i]);
+        __m256d a_i = _mm256_loadu_pd(&a.imag[i]);
+        __m256d b_r = _mm256_loadu_pd(&b.real[i]);
+        __m256d b_i = _mm256_loadu_pd(&b.imag[i]);
+
+        // (a_r + a_i i) * (b_r - b_i i) = (a_r*b_r + a_i*b_i) + (a_i*b_r - a_r*b_i)i
+        sum_r = _mm256_add_pd(sum_r, _mm256_add_pd(_mm256_mul_pd(a_r, b_r), _mm256_mul_pd(a_i, b_i)));
+        sum_i = _mm256_add_pd(sum_i, _mm256_sub_pd(_mm256_mul_pd(a_i, b_r), _mm256_mul_pd(a_r, b_i)));
+    }
+
+    // Horizontal sum
+    double r_tmp[4], i_tmp[4];
+    _mm256_storeu_pd(r_tmp, sum_r);
+    _mm256_storeu_pd(i_tmp, sum_i);
+    
+    res_r = r_tmp[0] + r_tmp[1] + r_tmp[2] + r_tmp[3];
+    res_i = i_tmp[0] + i_tmp[1] + i_tmp[2] + i_tmp[3];
+
+    for (; i < n; ++i) {
+        res_r += a.real[i] * b.real[i] + a.imag[i] * b.imag[i];
+        res_i += a.imag[i] * b.real[i] - a.real[i] * b.imag[i];
+    }
+}
+
+// --- HELPERS ---
+
+#include <complex>
+
+inline ComplexVectorSoA AoS_to_SoA(const std::vector<std::complex<double>>& aos) {
+    ComplexVectorSoA soa(aos.size());
+    for (size_t i = 0; i < aos.size(); ++i) {
+        soa.real[i] = aos[i].real();
+        soa.imag[i] = aos[i].imag();
+    }
+    return soa;
+}
+
+inline std::vector<std::complex<double>> SoA_to_AoS(const ComplexVectorSoA& soa) {
+    std::vector<std::complex<double>> aos(soa.size());
+    for (size_t i = 0; i < soa.size(); ++i) {
+        aos[i] = {soa.real[i], soa.imag[i]};
+    }
+    return aos;
+}
