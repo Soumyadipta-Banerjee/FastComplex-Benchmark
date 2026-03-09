@@ -8,7 +8,7 @@ While profiling CFD code, I noticed a significant performance penalty when using
 
 This repository tests the hypothesis that replacing `std::complex` (AoS) with a custom Structure of Arrays (SoA) layout—and manually writing AVX2 intrinsics to process four `double` values per clock cycle—can yield substantial speedups in operations common to CFD (Addition, Multiplication, DAXPY, Division, Dot Product, and GEMV).
 
-## New Features (Expanded POC)
+## Implemented Features
 
 - **Vectorized Kernels**: Added AVX2-optimized implementations for:
   - **Complex Division**: ~11.1x speedup over `std::complex`.
