@@ -48,8 +48,8 @@ struct BenchData {
             for (size_t j = 0; j < size; ++j) {
                 std::complex<double> val = {dist(gen), dist(gen)};
                 mat_aos[i][j] = val;
-                mat_soa.real[i * size + j] = val.real();
-                mat_soa.imag[i * size + j] = val.imag();
+                mat_soa.real[i * mat_soa.stride_cols + j] = val.real();
+                mat_soa.imag[i * mat_soa.stride_cols + j] = val.imag();
             }
         }
     }

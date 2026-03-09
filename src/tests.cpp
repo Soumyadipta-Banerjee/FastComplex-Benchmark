@@ -63,9 +63,11 @@ int main() {
 
     // Test GEMV
     MatrixSoA mat(4, n);
-    for (size_t i = 0; i < 4 * n; ++i) {
-        mat.real[i] = i * 0.1;
-        mat.imag[i] = i * 0.2;
+    for (size_t i = 0; i < 4; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            mat.real[i * mat.stride_cols + j] = (i * n + j) * 0.1;
+            mat.imag[i * mat.stride_cols + j] = (i * n + j) * 0.2;
+        }
     }
     ComplexVectorSoA gemv_res_v(4), gemv_res_s(4);
     GemvSoA_AVX2(mat, a, gemv_res_v);
@@ -74,8 +76,8 @@ int main() {
     for (size_t i = 0; i < 4; ++i) {
         double r = 0, im = 0;
         for (size_t j = 0; j < n; ++j) {
-            double ar = mat.real[i * n + j];
-            double ai = mat.imag[i * n + j];
+            double ar = mat.real[i * mat.stride_cols + j];
+            double ai = mat.imag[i * mat.stride_cols + j];
             double xr = a.real[j];
             double xi = a.imag[j];
             r += ar * xr - ai * xi;
