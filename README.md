@@ -11,10 +11,13 @@ This repository tests the hypothesis that replacing `std::complex` (AoS) with a 
 ## New Features (Expanded POC)
 
 - **Vectorized Kernels**: Added AVX2-optimized implementations for:
-  - **Complex Division**: ~4.2x speedup over `std::complex`.
-  - **Complex Dot Product**: ~3.9x speedup.
-  - **Complex GEMV (Matrix-Vector)**: ~3.2x speedup.
-- **Improved Layout**: Implemented `ComplexVectorSoA` and `MatrixSoA` for better SIMD efficiency.
+  - **Complex Division**: ~11.1x speedup over `std::complex`.
+  - **Complex GEMV (Matrix-Vector)**: ~4.6x speedup.
+  - **Complex DAXPY**: ~4.0x speedup.
+  - **Complex Dot Product**: ~3.8x speedup.
+  - **Complex Multiplication**: ~2.6x speedup.
+- **Improved Layout**: Implemented `ComplexVectorSoA` and `MatrixSoA` for better SIMD efficiency, featuring standard `stride_cols` for algorithmic padding.
+- **Aligned Memory**: Added a custom `AlignedAllocator` enforcing strict 64-byte heap alignment to unlock fast `_mm256_load_pd` and `_mm256_store_pd` intrinsics.
 - **Conversion Helpers**: Added highly efficient AoS $\leftrightarrow$ SoA transformation utilities.
 - **Verification Suite**: Added a dedicated sanity test to ensure mathematical parity between scalar and vectorized paths.
 
