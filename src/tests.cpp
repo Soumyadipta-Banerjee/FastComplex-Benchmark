@@ -20,6 +20,15 @@ int main() {
         b.imag[i] = (i + 1.0) * 1.5;
     }
 
+    // Test Addition
+    AddSoA(a, b, res_scalar);
+    AddSoA_AVX2(a, b, res_vector);
+    for (size_t i = 0; i < n; ++i) {
+        assert(near(res_scalar.real[i], res_vector.real[i]));
+        assert(near(res_scalar.imag[i], res_vector.imag[i]));
+    }
+    std::cout << "Addition: PASSED\n";
+
     // Test Multiplication
     MultiplySoA(a, b, res_scalar);
     MultiplySoA_AVX2(a, b, res_vector);

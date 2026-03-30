@@ -22,6 +22,38 @@ struct ComplexVectorSoA {
     }
 };
 
+// --- ADDITION ---
+
+// Raw loop addition (Scalar SoA)
+inline void AddSoA(const ComplexVectorSoA& a, const ComplexVectorSoA& b, ComplexVectorSoA& result) {
+    const size_t n = a.size();
+    for (size_t i = 0; i < n; ++i) {
+        result.real[i] = a.real[i] + b.real[i];
+        result.imag[i] = a.imag[i] + b.imag[i];
+    }
+}
+
+// AVX2 vectorized addition (Vector SoA)
+inline void AddSoA_AVX2(const ComplexVectorSoA& a, const ComplexVectorSoA& b, ComplexVectorSoA& result) {
+    const size_t n = a.size();
+    size_t i = 0;
+
+    for (; i + 3 < n; i += 4) {
+        __m256d a_real = _mm256_load_pd(&a.real[i]);
+        __m256d a_imag = _mm256_load_pd(&a.imag[i]);
+        __m256d b_real = _mm256_load_pd(&b.real[i]);
+        __m256d b_imag = _mm256_load_pd(&b.imag[i]);
+
+        _mm256_store_pd(&result.real[i], _mm256_add_pd(a_real, b_real));
+        _mm256_store_pd(&result.imag[i], _mm256_add_pd(a_imag, b_imag));
+    }
+
+    for (; i < n; ++i) {
+        result.real[i] = a.real[i] + b.real[i];
+        result.imag[i] = a.imag[i] + b.imag[i];
+    }
+}
+
 // --- MULTIPLICATION ---
 
 // Raw loop multiplication (Scalar SoA)

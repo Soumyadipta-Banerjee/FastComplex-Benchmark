@@ -16,9 +16,11 @@ This repository tests the hypothesis that replacing `std::complex` (AoS) with a 
   - **Complex DAXPY**: ~4.0x speedup.
   - **Complex Dot Product**: ~3.8x speedup.
   - **Complex Multiplication**: ~2.6x speedup.
+  - **Complex Addition**: ~1.3x speedup.
+- **FFT Stress Test**: Radix-2 iterative FFT implemented in both AoS and SoA layouts to compare memory access patterns on butterfly operations.
 - **Improved Layout**: Implemented `ComplexVectorSoA` and `MatrixSoA` for better SIMD efficiency, featuring standard `stride_cols` for algorithmic padding.
 - **Aligned Memory**: Added a custom `AlignedAllocator` enforcing strict 64-byte heap alignment to unlock fast `_mm256_load_pd` and `_mm256_store_pd` intrinsics.
-- **Conversion Helpers**: Added highly efficient AoS $\leftrightarrow$ SoA transformation utilities.
+- **Conversion Helpers**: AoS $\leftrightarrow$ SoA transformation utilities.
 - **Verification Suite**: Added a dedicated sanity test to ensure mathematical parity between scalar and vectorized paths.
 
 ## Requirements

@@ -55,6 +55,35 @@ struct BenchData {
     }
 };
 
+// --- Addition ---
+
+static void BM_Addition_AoS(benchmark::State& state) {
+    size_t size = state.range(0);
+    BenchData data(size);
+
+    for (auto _ : state) {
+        for (size_t i = 0; i < size; ++i) {
+            data.aos_res[i] = data.aos_a[i] + data.aos_b[i];
+        }
+        benchmark::DoNotOptimize(data.aos_res.data());
+        benchmark::ClobberMemory();
+    }
+    state.SetItemsProcessed(state.iterations() * size);
+}
+
+static void BM_Addition_SoA_AVX2(benchmark::State& state) {
+    size_t size = state.range(0);
+    BenchData data(size);
+
+    for (auto _ : state) {
+        AddSoA_AVX2(data.soa_a, data.soa_b, data.soa_res);
+        benchmark::DoNotOptimize(data.soa_res.real.data());
+        benchmark::DoNotOptimize(data.soa_res.imag.data());
+        benchmark::ClobberMemory();
+    }
+    state.SetItemsProcessed(state.iterations() * size);
+}
+
 // --- Multiplication ---
 
 static void BM_Multiplication_AoS(benchmark::State& state) {
@@ -276,6 +305,9 @@ static void BM_FFT_SoA(benchmark::State& state) {
 
 const int MIN_RANGE = 1 << 10;
 const int MAX_RANGE = 1 << 14; // Further reduced range to keep GEMV benchmarks within reasonable time
+
+BENCHMARK(BM_Addition_AoS)->Range(MIN_RANGE, MAX_RANGE);
+BENCHMARK(BM_Addition_SoA_AVX2)->Range(MIN_RANGE, MAX_RANGE);
 
 BENCHMARK(BM_Multiplication_AoS)->Range(MIN_RANGE, MAX_RANGE);
 BENCHMARK(BM_Multiplication_SoA_AVX2)->Range(MIN_RANGE, MAX_RANGE);
